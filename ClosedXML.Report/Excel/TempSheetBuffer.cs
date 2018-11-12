@@ -174,8 +174,20 @@ namespace ClosedXML.Report.Excel
                     var img = tgtSheet.AddPicture(pic.ImageStream);
                     img.Placement = ClosedXML.Excel.Drawings.XLPicturePlacement.FreeFloating;
 
-                    var imgFromCell = tgtSheet.Cell(pic.TopLeftCellAddress.RowNumber + 1, pic.TopLeftCellAddress.ColumnNumber + 1);
-                    var imgToCell = tgtSheet.Cell(pic.TopLeftCellAddress.RowNumber + 2, pic.TopLeftCellAddress.ColumnNumber + 2);
+                    var imgFromCell = tgtSheet.Cell(pic.TopLeftCellAddress.RowNumber + tgtStartRow - 1, pic.TopLeftCellAddress.ColumnNumber + 1);
+
+                    // 检查当前行是否有合并
+                    var imgRange = tgtSheet.MergedRanges.FirstOrDefault(r => r.Contains(imgFromCell));
+
+                    int rangeColCount = 0;
+                    int rangeRowCount = 0;
+                    if (imgRange != null)
+                    {
+                        rangeColCount = imgRange.ColumnCount() - 1;
+                        rangeRowCount = imgRange.RowCount() - 1;
+                    }
+
+                    var imgToCell = tgtSheet.Cell(pic.TopLeftCellAddress.RowNumber + tgtStartRow + rangeRowCount, pic.TopLeftCellAddress.ColumnNumber + rangeColCount + 2);
 
                     img.MoveTo(imgFromCell.Address, imgToCell.Address);
                 }

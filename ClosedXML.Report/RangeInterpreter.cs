@@ -158,7 +158,7 @@ namespace ClosedXML.Report
                 var items = datas as object[] ?? datas.Cast<object>().ToArray();
                 var tplt = RangeTemplate.Parse(nr, _errors);
                 var nrng = nr.Ranges.First();
-                using (var buff = tplt.Generate(items))
+                using (var buff = tplt.Generate(items, _variables))
                 {
                     var trgtRng = buff.CopyTo(nrng);
                     nr.SetRefersTo(trgtRng);

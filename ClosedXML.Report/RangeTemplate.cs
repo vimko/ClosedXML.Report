@@ -138,10 +138,19 @@ namespace ClosedXML.Report
                    select nr;
         }
 
-        public IReportBuffer Generate(object[] items)
+        public IReportBuffer Generate(object[] items, Dictionary<string, object> variables = null)
         {
             var evaluator = new FormulaEvaluator();
             evaluator.AddVariable("items", items);
+
+            if (variables != null)
+            {
+                foreach (var item in variables)
+                {
+                    evaluator.AddVariable(item.Key, item.Value);
+                }
+            }
+
             _rangeTags.Reset();
 
             if (IsHorizontal)
