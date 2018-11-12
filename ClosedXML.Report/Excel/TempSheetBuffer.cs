@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using ClosedXML.Excel;
 using ClosedXML.Report.Utils;
@@ -48,7 +49,26 @@ namespace ClosedXML.Report.Excel
         public void WriteValue(object value, IXLStyle cellStyle, TemplateCell tempCell)
         {
             var xlCell = _sheet.Cell(_row, _clmn);
-            xlCell.SetValue(value);
+
+            if (value != null && value.GetType() == typeof(string) && value.ToString().StartsWith("&image="))
+            {
+                var imageFile = value.ToString().Substring(7);
+
+                if (File.Exists(imageFile))
+                {
+                    var image = _sheet.AddPicture(imageFile);
+
+                    image.MoveTo(xlCell.Address);
+                }
+                else
+                {
+                    xlCell.Value = $"Í¼Æ¬Â·¾¶²»´æÔÚ";
+                }
+            }
+            else
+            {
+                xlCell.SetValue(value);
+            }
             xlCell.Style = cellStyle ?? _wb.Style;
             _maxClmn = Math.Max(_maxClmn, _clmn);
             _maxRow = Math.Max(_maxRow, _row);
@@ -145,6 +165,21 @@ namespace ClosedXML.Report.Excel
                     // Set the height of the current row to the height of the template row
                     xlRow.Height = row.Height;
                 }
+
+            // ¸´ÖÆÍ¼Æ¬
+            if (_sheet.Pictures != null && _sheet.Pictures.Any())
+            {
+                foreach (var pic in _sheet.Pictures)
+                {
+                    var img = tgtSheet.AddPicture(pic.ImageStream);
+                    img.Placement = ClosedXML.Excel.Drawings.XLPicturePlacement.FreeFloating;
+
+                    var imgFromCell = tgtSheet.Cell(pic.TopLeftCellAddress.RowNumber + 1, pic.TopLeftCellAddress.ColumnNumber + 1);
+                    var imgToCell = tgtSheet.Cell(pic.TopLeftCellAddress.RowNumber + 2, pic.TopLeftCellAddress.ColumnNumber + 2);
+
+                    img.MoveTo(imgFromCell.Address, imgToCell.Address);
+                }
+            }
             return range;
         }
 

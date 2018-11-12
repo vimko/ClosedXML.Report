@@ -8,7 +8,7 @@ using ClosedXML.Report.Excel;
 using ClosedXML.Report.Options;
 using ClosedXML.Report.Utils;
 using System.Linq.Dynamic.Core.Exceptions;
-
+using System.IO;
 
 namespace ClosedXML.Report
 {
@@ -43,9 +43,9 @@ namespace ClosedXML.Report
             var cells = from c in range.CellsUsed(c => !c.HasFormula
                                                     && !innerRanges.Any(nr =>
                                                     {
-                                                           using (var r = nr.Ranges)
-                                                           using (var cr = c.AsRange())
-                                                               return r.Contains(cr);
+                                                        using (var r = nr.Ranges)
+                                                        using (var cr = c.AsRange())
+                                                            return r.Contains(cr);
                                                     }))
                         let value = c.GetString()
                         where (value.StartsWith("<<") || value.EndsWith(">>"))
@@ -113,6 +113,21 @@ namespace ClosedXML.Report
                 {
                     if (value.StartsWith("&="))
                         cell.FormulaA1 = _evaluator.Evaluate(value.Substring(2), pars).ToString();
+                    else if (value.StartsWith("&image="))
+                    {
+                        var imageFile = _evaluator.Evaluate(value.Substring(7), pars).ToString();
+
+                        if (File.Exists(imageFile))
+                        {
+                            var image = range.Worksheet.AddPicture(imageFile);
+
+                            image.MoveTo(cell.Address);
+                        }
+                        else
+                        {
+                            cell.Value = $"图片路径不存在";
+                        }
+                    }
                     else
                         cell.Value = _evaluator.Evaluate(value, pars);
                 }
@@ -147,7 +162,7 @@ namespace ClosedXML.Report
                 {
                     var trgtRng = buff.CopyTo(nrng);
                     nr.SetRefersTo(trgtRng);
-                    
+
                     tplt.RangeTagsApply(trgtRng, items);
                 }
 
